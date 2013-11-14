@@ -44,36 +44,43 @@ int main(void)
 {
   Command cmd;
   int n;
-  /*
-   * Get path
-   */
-  char* path = strtok(getenv("PATH"), ":");
-  printf("PATH: %s\n", path+1);
-  path = strtok(NULL, ":");
-  printf("PATH: %s\n", path+1);
   while (!done) {
 
     char *line;
     line = readline("> ");
 
     if (!line) {
-      /* Encountered EOF at top level */
+      /* Encountered EOF at top level *///
       done = 1;
     }
     else {
+        pid_t child_pid;
+        int child_status;
+        child_pid = fork();
+        if(child_pid == 0){
       /*
        * Remove leading and trailing whitespace from the line
        * Then, if there is anything left, add it to the history list
        * and execute it.
        */
-      stripwhite(line);
+        stripwhite(line);
+      
+            if(*line) {
+              add_history(line);
+              /* execute it */
+              n = parse(line, &cmd);
+              char **pl =cmd.pgm->pgmlist;
+              execvp(pl[0],pl);
+              PrintCommand(n, &cmd);
+            }
+        }else{
+          pid_t tpid;
+          do{
+              tpid = wait(&child_status);
 
-      if(*line) {
-        add_history(line);
-        /* execute it */
-        n = parse(line, &cmd);
-        PrintCommand(n, &cmd);
-      }
+          }while (tpid != child_pid);
+        
+        }
     }
     
     if(line) {
