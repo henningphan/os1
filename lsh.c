@@ -77,7 +77,6 @@ int main(void)
           pid_t tpid;
           do{
               tpid = wait(&child_status);
-
           }while (tpid != child_pid);
         
         }
