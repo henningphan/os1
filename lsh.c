@@ -71,6 +71,8 @@ int main(void)
               n = parse(line, &cmd);
               char **pl =cmd.pgm->pgmlist;
               execvp(pl[0],pl);
+              printf("lsh: %s: command not found\n",pl[0]);
+              exit(1);
               PrintCommand(n, &cmd);
             }
         }else{
