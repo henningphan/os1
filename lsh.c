@@ -69,12 +69,13 @@ int main(void)
               add_history(line);
               /* execute it */
               n = parse(line, &cmd);
-              char **pl =cmd.pgm->pgmlist;
-              execvp(pl[0],pl);
-              printf("lsh: %s: command not found\n",pl[0]);
-              exit(1);
               PrintCommand(n, &cmd);
             }
+            char **pl =cmd.pgm->pgmlist;
+            printf("pl[0]: %s", pl[0]);
+            execvp(pl[0],pl);
+            printf("lsh: %s: command not found\n",pl[0]);
+            exit(1);
         }else{
           pid_t tpid;
           do{
