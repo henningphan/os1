@@ -22,6 +22,7 @@
 #include <readline/readline.h>
 #include <readline/history.h>
 #include "parse.h"
+#include <signal.h>
 
 /*
  * Function declarations
@@ -30,6 +31,7 @@
 void PrintCommand(int, Command *);
 void PrintPgm(Pgm *);
 void stripwhite(char *);
+void sigtest(int);
 
 /* When non-zero, this global means the user is done using this program. */
 int done = 0;
@@ -40,8 +42,10 @@ int done = 0;
  * Description: Gets the ball rolling...
  *
  */
-int main(void)
-{
+int main(void) {
+  //signal(SIGINT, sigtest);
+  signal(SIGTSTP, sigtest);
+
   Command cmd;
   int n;
   while (!done) {
@@ -71,16 +75,43 @@ int main(void)
               n = parse(line, &cmd);
               PrintCommand(n, &cmd);
             }
-            char **pl =cmd.pgm->pgmlist;
-            printf("pl[0]: %s", pl[0]);
+            int fd[2];
+            pipe(fd);
+            Pgm *pgm = cmd.pgm;
+            int child_pid1 = fork();
+
+            if(child_pid1==0){
+                printf("teeeeeeeeeeeeeeeeeest pl[0]: ");
+                char **pl = pgm->pgmlist;
+                close(fd[1]);
+                dup2(fd[0], 0);
+                execvp(pl[0],pl);
+                printf("lsh: %s: command not found\n",pl[0]);
+                exit(1);
+            }else{
+                Pgm *pgm1 = pgm->next;
+                char **pl1 = pgm1->pgmlist;
+                close(fd[0]);
+                dup2(fd[1], 1);
+                execvp(pl1[0],pl1);
+                printf("lsh: %s: command not found\n",pl1[0]);
+                exit(1);
+            }
+
+            Pgm *pgm1 = pgm->next;
+            char **pl = pgm->pgmlist;
+            //char **pl =cmd.pgm->pgmlist;
+            printf("teeeeeeeeeeeeeeeeeest pl[0]: ");
             execvp(pl[0],pl);
             printf("lsh: %s: command not found\n",pl[0]);
             exit(1);
         }else{
           pid_t tpid;
-          do{
+          if(cmd.bakground){
+            do{
               tpid = wait(&child_status);
-          }while (tpid != child_pid);
+            }while (tpid != child_pid);
+          }
         
         }
     }
@@ -132,6 +163,22 @@ PrintPgm (Pgm *p)
       printf("%s ", *pl++);
     }
     printf("]\n");
+  }
+}
+/*
+* Name: sigtest
+*
+* Signal handler
+*/
+void sigtest(int sig)
+{
+  if(sig == SIGINT)
+  {
+    ;
+  }
+  else if(sig == SIGTSTP)
+  {
+    ;
   }
 }
 
