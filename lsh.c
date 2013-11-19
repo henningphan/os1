@@ -23,6 +23,10 @@
 #include <readline/history.h>
 #include "parse.h"
 #include <signal.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 
 /*
  * Function declarations
@@ -32,7 +36,7 @@ void PrintCommand(int, Command *);
 void PrintPgm(Pgm *);
 void stripwhite(char *);
 void sigtest(int);
-
+void Startexec(Command *);
 /* When non-zero, this global means the user is done using this program. */
 int done = 0;
 
@@ -45,6 +49,8 @@ int done = 0;
 int main(void) {
   //signal(SIGINT, sigtest);
   signal(SIGTSTP, sigtest);
+  static const int READ = 0;
+  static const int WRITE = 1;
 
   Command cmd;
   int n;
@@ -74,7 +80,9 @@ int main(void) {
               /* execute it */
               n = parse(line, &cmd);
               PrintCommand(n, &cmd);
+              Startexec(&cmd);
             }
+            /*
             int fd[2];
             pipe(fd);
             Pgm *pgm = cmd.pgm;
@@ -84,7 +92,7 @@ int main(void) {
                 printf("teeeeeeeeeeeeeeeeeest pl[0]: ");
                 char **pl = pgm->pgmlist;
                 close(fd[1]);
-                dup2(fd[0], 0);
+                dup2(fd[0], STDIN_FILENO);
                 execvp(pl[0],pl);
                 printf("lsh: %s: command not found\n",pl[0]);
                 exit(1);
@@ -92,7 +100,7 @@ int main(void) {
                 Pgm *pgm1 = pgm->next;
                 char **pl1 = pgm1->pgmlist;
                 close(fd[0]);
-                dup2(fd[1], 1);
+                dup2(fd[1], STDOUT_FILENO);
                 execvp(pl1[0],pl1);
                 printf("lsh: %s: command not found\n",pl1[0]);
                 exit(1);
@@ -104,6 +112,7 @@ int main(void) {
             printf("teeeeeeeeeeeeeeeeeest pl[0]: ");
             execvp(pl[0],pl);
             printf("lsh: %s: command not found\n",pl[0]);
+            */
             exit(1);
         }else{
           pid_t tpid;
@@ -122,6 +131,32 @@ int main(void) {
   }
   return 0;
 }
+/*
+ * Name: Startexec 
+ *
+ * Description: Start function for recursive calls, handles special cases
+ *
+ */
+void Startexec(Command *cmd){
+    char *rstdout = cmd->rstdout;
+    if (rstdout == NULL){
+        printf("RSTDOUT: False");
+    }else{
+        printf("RSTDOUT: True");
+        int fdin = open(rstdout,O_CREAT | O_WRONLY, S_IRWXU | S_IRGRP | S_IROTH);
+        dup2(fdin, STDOUT_FILENO);
+    }
+    Pgm *pgm = cmd->pgm;
+    Pgm *pgmNext = pgm->next;
+    if( pgmNext==NULL){
+        printf("pgmNext: NULL");
+    }
+    char **pl = pgm ->pgmlist;
+    execvp(pl[0],pl);
+    exit(1);
+
+
+}
 
 /*
  * Name: PrintCommand
@@ -129,8 +164,7 @@ int main(void) {
  * Description: Prints a Command structure as returned by parse on stdout.
  *
  */
-void
-PrintCommand (int n, Command *cmd)
+void PrintCommand (int n, Command *cmd)
 {
   printf("Parse returned %d:\n", n);
   printf("   stdin : %s\n", cmd->rstdin  ? cmd->rstdin  : "<none>" );
@@ -145,8 +179,7 @@ PrintCommand (int n, Command *cmd)
  * Description: Prints a list of Pgm:s
  *
  */
-void
-PrintPgm (Pgm *p)
+void PrintPgm (Pgm *p)
 {
   if (p == NULL) {
     return;
