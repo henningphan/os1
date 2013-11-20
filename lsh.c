@@ -37,8 +37,11 @@ void PrintPgm(Pgm *);
 void stripwhite(char *);
 void sigtest(int);
 void Startexec(Command *);
+void finishexec(Command *, Pgm *);
 /* When non-zero, this global means the user is done using this program. */
 int done = 0;
+const int READ = 0;
+const int WRITE = 1;
 
 /*
  * Name: main
@@ -49,8 +52,6 @@ int done = 0;
 int main(void) {
   //signal(SIGINT, sigtest);
   signal(SIGTSTP, sigtest);
-  static const int READ = 0;
-  static const int WRITE = 1;
 
   Command cmd;
   int n;
@@ -82,38 +83,6 @@ int main(void) {
               PrintCommand(n, &cmd);
               Startexec(&cmd);
             }
-            /*
-            int fd[2];
-            pipe(fd);
-            Pgm *pgm = cmd.pgm;
-            int child_pid1 = fork();
-
-            if(child_pid1==0){
-                printf("teeeeeeeeeeeeeeeeeest pl[0]: ");
-                char **pl = pgm->pgmlist;
-                close(fd[1]);
-                dup2(fd[0], STDIN_FILENO);
-                execvp(pl[0],pl);
-                printf("lsh: %s: command not found\n",pl[0]);
-                exit(1);
-            }else{
-                Pgm *pgm1 = pgm->next;
-                char **pl1 = pgm1->pgmlist;
-                close(fd[0]);
-                dup2(fd[1], STDOUT_FILENO);
-                execvp(pl1[0],pl1);
-                printf("lsh: %s: command not found\n",pl1[0]);
-                exit(1);
-            }
-
-            Pgm *pgm1 = pgm->next;
-            char **pl = pgm->pgmlist;
-            //char **pl =cmd.pgm->pgmlist;
-            printf("teeeeeeeeeeeeeeeeeest pl[0]: ");
-            execvp(pl[0],pl);
-            printf("lsh: %s: command not found\n",pl[0]);
-            */
-            exit(1);
         }else{
           pid_t tpid;
           if(cmd.bakground){
@@ -139,25 +108,65 @@ int main(void) {
  */
 void Startexec(Command *cmd){
     char *rstdout = cmd->rstdout;
-    if (rstdout == NULL){
-        printf("RSTDOUT: False");
-    }else{
-        printf("RSTDOUT: True");
-        int fdin = open(rstdout,O_CREAT | O_WRONLY, S_IRWXU | S_IRGRP | S_IROTH);
-        dup2(fdin, STDOUT_FILENO);
+    if (rstdout != NULL){
+        printf("RSTDOUT: %s", rstdout);
+        //Use creat instead?
+        int out = open(rstdout,O_CREAT | O_WRONLY | O_TRUNC, S_IRWXU | S_IRGRP | S_IROTH);
+        dup2(out, STDOUT_FILENO);
     }
-    Pgm *pgm = cmd->pgm;
-    Pgm *pgmNext = pgm->next;
-    if( pgmNext==NULL){
-        printf("pgmNext: NULL");
-    }
-    char **pl = pgm ->pgmlist;
-    execvp(pl[0],pl);
-    exit(1);
+
+    finishexec(cmd, cmd->pgm);
+
 
 
 }
 
+/*
+ * Name: finishexec
+ * 
+ * Description: Recursive call that handles pipes
+ *
+ */
+void finishexec(Command *cmd, Pgm *pgm){
+    Pgm *pgmNext = pgm->next;
+    char *rstdin = cmd->rstdin;
+    if( pgmNext == NULL && rstdin != NULL){
+        if( rstdin != NULL ){
+            printf("RSTDIN: %s", rstdin);
+            int in = open( rstdin, O_RDONLY);
+            dup2(in, STDIN_FILENO);
+        }
+        char **pl = pgm ->pgmlist;
+        execvp(pl[0],pl);
+        exit(1);
+
+    }else if( pgmNext == NULL ){
+        char **pl = pgm ->pgmlist;
+        execvp(pl[0],pl);
+        exit(1);
+        
+    }
+    int fd[2];
+    pipe(fd);
+
+    int child_pid= fork();
+    if ( child_pid == -1 ){
+        perror("fork");
+    }
+
+    if ( child_pid == 0){
+        dup2(fd[WRITE], STDOUT_FILENO);
+        close(fd[READ]);
+        finishexec(cmd, pgmNext);
+    }else{
+        dup2(fd[READ], STDIN_FILENO);
+        close(fd[WRITE]);
+        char **pl = pgm ->pgmlist;
+        execvp(pl[0],pl);
+        exit(1);
+    }
+}            
+             
 /*
  * Name: PrintCommand
  *
