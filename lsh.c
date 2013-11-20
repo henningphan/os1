@@ -73,7 +73,7 @@ int main(void) {
               n = parse(line, &cmd);
               PrintCommand(n, &cmd);
         }
-        if (! Initexec(&cmd)) {
+        if (! Builtexec(&cmd)) {
 
         pid_t child_pid;
         int child_status;
@@ -105,7 +105,7 @@ int main(void) {
  * Description: Checks if it is a built in function
  *
  */
-int Initexec(Command *cmd){
+int Builtexec(Command *cmd){
     Pgm *pgm = cmd->pgm;
     char **pl = pgm ->pgmlist;
     if( strcmp("exit", pl[0]) == 0) {
