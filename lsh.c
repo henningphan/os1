@@ -144,6 +144,7 @@ void Startexec(Command *cmd){
  *
  */
 void finishexec(Pgm *pgm){
+    signal(SIGINT, SIG_IGN);            // Ignore ^C
     Pgm *pgmNext = pgm->next;
     if( pgmNext == NULL ){              // If the next pgm is null
         char **pl = pgm ->pgmlist;      // then this is our last execution
