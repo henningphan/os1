@@ -38,7 +38,7 @@ void PrintPgm(Pgm *);
 void stripwhite(char *);
 void sigtest(int);
 void Startexec(Command *);
-void finishexec(Command *, Pgm *);
+void finishexec(Pgm *);
 /* When non-zero, this global means the user is done using this program. */
 int done = 0;
 const int READ = 0;
@@ -131,7 +131,15 @@ void Startexec(Command *cmd){
         int out = open(rstdout,O_CREAT | O_WRONLY | O_TRUNC, S_IRWXU | S_IRGRP | S_IROTH);
         dup2(out, STDOUT_FILENO);
     }
-    finishexec(cmd, cmd->pgm);
+
+    char *rstdin = cmd->rstdin;
+    if (rstdin != NULL){
+        printf("RSTDIN: %s", rstdin);
+        //Use creat instead?
+        int in = open( rstdin, O_RDONLY);
+        dup2(in, STDIN_FILENO);
+    }
+    finishexec( cmd->pgm);
 
 }
 
@@ -141,20 +149,9 @@ void Startexec(Command *cmd){
  * Description: Recursive call that handles pipes
  *
  */
-void finishexec(Command *cmd, Pgm *pgm){
+void finishexec(Pgm *pgm){
     Pgm *pgmNext = pgm->next;
-    char *rstdin = cmd->rstdin;
-    if( pgmNext == NULL && rstdin != NULL){
-        if( rstdin != NULL ){
-            printf("RSTDIN: %s", rstdin);
-            int in = open( rstdin, O_RDONLY);
-            dup2(in, STDIN_FILENO);
-        }
-        char **pl = pgm ->pgmlist;
-        execvp(pl[0],pl);
-        exit(1);
-
-    }else if( pgmNext == NULL ){
+    if( pgmNext == NULL ){
         char **pl = pgm ->pgmlist;
         execvp(pl[0],pl);
         exit(1);
@@ -171,7 +168,7 @@ void finishexec(Command *cmd, Pgm *pgm){
     if ( child_pid == 0){
         dup2(fd[WRITE], STDOUT_FILENO);
         close(fd[READ]);
-        finishexec(cmd, pgmNext);
+        finishexec(pgmNext);
     }else{
         dup2(fd[READ], STDIN_FILENO);
         close(fd[WRITE]);
