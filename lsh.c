@@ -123,8 +123,7 @@ void Startexec(Command *cmd){
     char *rstdout = cmd->rstdout;   
     if (rstdout != NULL){           // If we should output to file
         printf("RSTDOUT: %s", rstdout);
-        //TODO: Use creat instead?
-        int out = open(rstdout,O_CREAT | O_WRONLY | O_TRUNC, S_IRWXU | S_IRGRP | S_IROTH); // Get files' STDIN
+        int out = creat(rstdout, S_IRWXU | S_IRGRP | S_IROTH); // Get files' STDIN
         dup2(out, STDOUT_FILENO);   // Connect our STDOUT to files STDIN
     }
 
