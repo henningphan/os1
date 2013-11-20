@@ -75,22 +75,22 @@ int main(void) {
         }
         if (! Builtexec(&cmd)) {
 
-        pid_t child_pid;
-        int child_status;
-        child_pid = fork();
-        if(child_pid == 0){
-            Startexec(&cmd);
-            exit(0);
+            pid_t child_pid;
+            int child_status;
+            child_pid = fork();
+            if(child_pid == 0){
+                Startexec(&cmd);
+                exit(0);
 
-        }else{
-          pid_t tpid;
-          if(!cmd.bakground){
-            do{
-              tpid = wait(&child_status);
-            }while (tpid != child_pid);
-          }
-        
-        }
+            }else{
+              pid_t tpid;
+              if(!cmd.bakground){
+                do{
+                  tpid = wait(&child_status);
+                }while (tpid != child_pid);
+              }
+            
+            }
         }
     }
     if(line) {
@@ -100,7 +100,7 @@ int main(void) {
   return 0;
 }
 /*
- * Name. Initexec
+ * Name. Builtexec
  *
  * Description: Checks if it is a built in function
  *
@@ -131,10 +131,7 @@ void Startexec(Command *cmd){
         int out = open(rstdout,O_CREAT | O_WRONLY | O_TRUNC, S_IRWXU | S_IRGRP | S_IROTH);
         dup2(out, STDOUT_FILENO);
     }
-
     finishexec(cmd, cmd->pgm);
-
-
 
 }
 
