@@ -1,19 +1,10 @@
 /* 
  * Main source code file for lsh shell program
  *
- * You are free to add functions to this file.
- * If you want to add functions in a separate file 
- * you will need to modify Makefile to compile
- * your additional functions.
- *
- * Add appropriate comments in your code to make it
- * easier for us while grading your assignment.
- *
  * Submit the entire lab1 folder as a tar archive (.tgz).
  * Command to create submission archive: 
       $> tar cvf lab1.tgz lab1/
  *
- * All the best 
  */
 
 
@@ -39,6 +30,7 @@ void stripwhite(char *);
 void sigtest(int);
 void Startexec(Command *);
 void finishexec(Pgm *);
+
 /* When non-zero, this global means the user is done using this program. */
 int done = 0;
 const int READ = 0;
@@ -51,7 +43,7 @@ const int WRITE = 1;
  *
  */
 int main(void) {
-//  signal(SIGINT, sigtest);
+  signal(SIGINT, sigtest);
   signal(SIGTSTP, sigtest);
 
   Command cmd;
@@ -73,18 +65,20 @@ int main(void) {
               n = parse(line, &cmd);
               PrintCommand(n, &cmd);
         }
+        /* Check for builtin command and execute it */
         if (! Builtexec(&cmd)) {
 
+        /* If not a builtin cmd, fork */
             pid_t child_pid;
             int child_status;
             child_pid = fork();
-            if(child_pid == 0){
-                Startexec(&cmd);
-                exit(0);
 
+            if(child_pid == 0){
+                Startexec(&cmd); // Child code, recursive helper function
+                exit(0);
             }else{
-              pid_t tpid;
-              if(!cmd.bakground){
+              pid_t tpid;       // Parent code, to wait or not to wait for child
+              if(!cmd.bakground){ 
                 do{
                   tpid = wait(&child_status);
                 }while (tpid != child_pid);
@@ -103,7 +97,7 @@ int main(void) {
  * Name. Builtexec
  *
  * Description: Checks if it is a built in function
- *
+ * Return: 1 if it's a builtin function, else 0
  */
 int Builtexec(Command *cmd){
     Pgm *pgm = cmd->pgm;
@@ -120,26 +114,27 @@ int Builtexec(Command *cmd){
 /*
  * Name: Startexec 
  *
- * Description: Start function for recursive calls, handles special cases
+ * Description: Start function for recursive calls
+ * Sets up reading from file and writing to file and
+ * Calls the function Finishexec to handle the piping
  *
  */
 void Startexec(Command *cmd){
-    char *rstdout = cmd->rstdout;
-    if (rstdout != NULL){
+    char *rstdout = cmd->rstdout;   
+    if (rstdout != NULL){           // If we should output to file
         printf("RSTDOUT: %s", rstdout);
-        //Use creat instead?
-        int out = open(rstdout,O_CREAT | O_WRONLY | O_TRUNC, S_IRWXU | S_IRGRP | S_IROTH);
-        dup2(out, STDOUT_FILENO);
+        //TODO: Use creat instead?
+        int out = open(rstdout,O_CREAT | O_WRONLY | O_TRUNC, S_IRWXU | S_IRGRP | S_IROTH); // Get files' STDIN
+        dup2(out, STDOUT_FILENO);   // Connect our STDOUT to files STDIN
     }
 
     char *rstdin = cmd->rstdin;
-    if (rstdin != NULL){
+    if (rstdin != NULL){            // If we should read from file
         printf("RSTDIN: %s", rstdin);
-        //Use creat instead?
-        int in = open( rstdin, O_RDONLY);
-        dup2(in, STDIN_FILENO);
+        int in = open( rstdin, O_RDONLY);   // Get files STDOUT
+        dup2(in, STDIN_FILENO);             // Connect files' STDOUT to our STDIN
     }
-    finishexec( cmd->pgm);
+    finishexec( cmd->pgm);          // Executes other programs recursively and setup the pipes
 
 }
 
@@ -151,30 +146,30 @@ void Startexec(Command *cmd){
  */
 void finishexec(Pgm *pgm){
     Pgm *pgmNext = pgm->next;
-    if( pgmNext == NULL ){
-        char **pl = pgm ->pgmlist;
+    if( pgmNext == NULL ){              // If the next pgm is null
+        char **pl = pgm ->pgmlist;      // then this is our last execution
         execvp(pl[0],pl);
         exit(1);
         
     }
-    int fd[2];
+    int fd[2];                          // Ready the pipe
     pipe(fd);
 
-    int child_pid= fork();
+    int child_pid= fork();              // Fork
     if ( child_pid == -1 ){
         perror("fork");
     }
 
-    if ( child_pid == 0){
-        dup2(fd[WRITE], STDOUT_FILENO);
+    if ( child_pid == 0){               // Child code
+        dup2(fd[WRITE], STDOUT_FILENO); // Connect childs output to pipe
         close(fd[READ]);
-        finishexec(pgmNext);
-    }else{
-        dup2(fd[READ], STDIN_FILENO);
+        finishexec(pgmNext);            // see what pgm this child should execute
+    }else{                              // Parent code
+        dup2(fd[READ], STDIN_FILENO);   // Childs output is now parents input
         close(fd[WRITE]);
         char **pl = pgm ->pgmlist;
-        execvp(pl[0],pl);
-        exit(1);
+        execvp(pl[0],pl);               // Execute program
+        exit(1);                        // If error, just exit
     }
 }            
              
