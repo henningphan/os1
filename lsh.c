@@ -18,6 +18,7 @@
 
 
 #include <stdio.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <readline/readline.h>
 #include <readline/history.h>
@@ -50,7 +51,7 @@ const int WRITE = 1;
  *
  */
 int main(void) {
-  //signal(SIGINT, sigtest);
+//  signal(SIGINT, sigtest);
   signal(SIGTSTP, sigtest);
 
   Command cmd;
@@ -65,41 +66,57 @@ int main(void) {
       done = 1;
     }
     else {
-        pid_t child_pid;
-        int child_status;
-        child_pid = fork();
-        if(child_pid == 0){
-      /*
-       * Remove leading and trailing whitespace from the line
-       * Then, if there is anything left, add it to the history list
-       * and execute it.
-       */
         stripwhite(line);
-      
-            if(*line) {
+        if(*line) {
               add_history(line);
               /* execute it */
               n = parse(line, &cmd);
               PrintCommand(n, &cmd);
-              Startexec(&cmd);
-            }
+        }
+        if (! Initexec(&cmd)) {
+
+        pid_t child_pid;
+        int child_status;
+        child_pid = fork();
+        if(child_pid == 0){
+            Startexec(&cmd);
+            exit(0);
+
         }else{
           pid_t tpid;
-          if(cmd.bakground){
+          if(!cmd.bakground){
             do{
               tpid = wait(&child_status);
             }while (tpid != child_pid);
           }
         
         }
+        }
     }
-    
     if(line) {
       free(line);
     }
   }
   return 0;
 }
+/*
+ * Name. Initexec
+ *
+ * Description: Checks if it is a built in function
+ *
+ */
+int Initexec(Command *cmd){
+    Pgm *pgm = cmd->pgm;
+    char **pl = pgm ->pgmlist;
+    if( strcmp("exit", pl[0]) == 0) {
+        exit(0);
+    } else if ( strcmp("cd", pl[0]) == 0) {
+        chdir(pl[1]);
+    return 1;
+    }
+    return 0;
+}
+
 /*
  * Name: Startexec 
  *
