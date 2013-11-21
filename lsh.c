@@ -27,7 +27,6 @@
 void PrintCommand(int, Command *);
 void PrintPgm(Pgm *);
 void stripwhite(char *);
-void sigtest(int);
 void Startexec(Command *);
 void finishexec(Pgm *);
 
@@ -43,8 +42,9 @@ const int WRITE = 1;
  *
  */
 int main(void) {
-  signal(SIGINT, sigtest);
-  signal(SIGTSTP, sigtest);
+  signal(SIGINT, SIG_IGN);
+  signal(SIGTSTP, SIG_IGN);
+  signal(SIGCHLD, SIG_IGN);
 
   Command cmd;
   int n;
@@ -211,22 +211,6 @@ void PrintPgm (Pgm *p)
       printf("%s ", *pl++);
     }
     printf("]\n");
-  }
-}
-/*
-* Name: sigtest
-*
-* Signal handler
-*/
-void sigtest(int sig)
-{
-  if(sig == SIGINT)
-  {
-    ;
-  }
-  else if(sig == SIGTSTP)
-  {
-    ;
   }
 }
 
