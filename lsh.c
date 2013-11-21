@@ -60,32 +60,30 @@ int main(void) {
     else {
         stripwhite(line);
         if(*line) {
-              add_history(line);
-              /* execute it */
-              n = parse(line, &cmd);
-              PrintCommand(n, &cmd);
-        }
-        /* Check for builtin command and execute it */
-        if (! Builtexec(&cmd)) {
+            add_history(line);
+            /* execute it */
+            n = parse(line, &cmd);
+            PrintCommand(n, &cmd);
+            if (! Builtexec(&cmd)) {
 
-        /* If not a builtin cmd, fork */
-            pid_t child_pid;
-            int child_status;
-            child_pid = fork();
+            /* If not a builtin cmd, fork */
+                pid_t child_pid;
+                int child_status;
+                child_pid = fork();
 
-            if(child_pid == 0){
-                Startexec(&cmd); // Child code, recursive helper function
-                exit(0);
-            }else{
-              pid_t tpid;       // Parent code, to wait or not to wait for child
-              if(!cmd.bakground){ 
-                do{
-                  tpid = wait(&child_status);
-                }while (tpid != child_pid);
-              }
-            
+                if(child_pid == 0){
+                    Startexec(&cmd); // Child code, recursive helper function
+                    exit(0);
+                }else{
+                  pid_t tpid;       // Parent code, to wait or not to wait for child
+                  if(!cmd.bakground){ 
+                      tpid = waitpid(child_pid, &child_status, 0);
+                  }
+                
+                }
             }
         }
+        /* Check for builtin command and execute it */
     }
     if(line) {
       free(line);
