@@ -1,6 +1,7 @@
 /* 
  * Main source code file for lsh shell program
- *
+ * Author: Henning Phan and Gustav Ehrenborg
+ * Group : B 22
  * Submit the entire lab1 folder as a tar archive (.tgz).
  * Command to create submission archive: 
       $> tar cvf lab1.tgz lab1/
@@ -63,7 +64,7 @@ int main(void) {
             add_history(line);
             /* execute it */
             n = parse(line, &cmd);
-            PrintCommand(n, &cmd);
+            //PrintCommand(n, &cmd);
             if (! Builtexec(&cmd)) {
 
             /* If not a builtin cmd, fork */
@@ -147,6 +148,7 @@ void finishexec(Pgm *pgm){
     if( pgmNext == NULL ){              // If the next pgm is null
         char **pl = pgm ->pgmlist;      // then this is our last execution
         execvp(pl[0],pl);
+        perror("ERROR COMMAND NOT FOUND");
         exit(1);
         
     }
@@ -167,7 +169,8 @@ void finishexec(Pgm *pgm){
         close(fd[WRITE]);
         char **pl = pgm ->pgmlist;
         execvp(pl[0],pl);               // Execute program
-        exit(1);                        // If error, just exit
+        perror("ERROR COMMAND NOT FOUND");
+
     }
 }            
              

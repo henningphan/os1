@@ -27,7 +27,8 @@ int main(int argc, char *argv[] ) {
   print_queue();
   printf("==Remove 100\n");
   int *inten;
-  for(int i = 0; i < 100; i++) {
+  int i = 0;
+  for(i = 0; i < 100; i++) {
 	dequeue(inten);
   }
   print_queue();
@@ -42,7 +43,8 @@ int main(int argc, char *argv[] ) {
 
 /* Put numbers 1-100 in queue*/
 void fill100() {
-  for (int i = 1; i <= 100; i++){
+  int i = 1;
+  for (i = 1; i <= 100; i++){
 	enqueue(i);
   }
 }

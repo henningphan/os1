@@ -34,23 +34,15 @@ void enqueue(int val) {
   struct node* node = (struct node*)malloc(sizeof(struct node));
   node->value = val;
   node->next = NULL;
-  //Append it TODO fixa dummy node, med dummy node är tail aldrig NULL
-  if (queue->tail==NULL) {
-	printf("Ingen tail\n");
-    queue->tail = node;
-	queue->head = node; 
-  } else {
-	queue->tail->next = node;
-	queue->tail = node;
-  }  
+  queue->tail->next = node;
+  queue->tail = node;
 }
 
 /* Pops the head of the queue */
 int dequeue(int *extractedValue) {
-  //If statement can be removed when dummy is implemented
   struct node* temp = NULL;
-  if (queue->head != NULL){
-	temp = queue->head;
+  if (queue->head->next != NULL){
+	temp = queue->head->next;
 	queue->head = temp->next;
 	extractedValue = &temp->value;
 	free(temp);
@@ -66,9 +58,14 @@ int dequeue(int *extractedValue) {
 /* Creates a new list */
 struct linked_list* new_linked_list(){
   struct linked_list* list = (struct linked_list*)malloc(sizeof(struct linked_list));
+  struct node* node = (struct node*)malloc(sizeof(struct node));
+
+  /* Initialize dummy node */
+  node->value = 0;
+  node->next = NULL;
     
-  list->head = NULL;
-  list->tail = NULL;
+  list->head = node;
+  list->tail = node;
 
   return list;
 }
@@ -76,7 +73,7 @@ struct linked_list* new_linked_list(){
 /* Print list */
 void print_queue(){
   printf("{ ");
-  struct node* node = queue->head;
+  struct node* node = queue->head->next;
 
   while (node != NULL){
     printf("%d, ", node->value);
