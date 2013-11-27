@@ -9,26 +9,32 @@
 #include <time.h>
 #include <sys/time.h>
 #include "conc.h"
+#include <pthread.h>
 
-void fill100(void);
+void fill100(int);
+void *dummy_gustav(void*);
 
 int main(int argc, char *argv[] ) {
   struct timeval t1, t2;
   double elapsedTime;
+  pthread_t thread1, thread2;
 
   initialize_queue(); //create a queue
   gettimeofday(&t1, NULL); // Start stopwatch
 
   // Do things here ---------
   // examples: enqueue(int), dequeue(*int), fill100() and print_queue()
+  printf("==Add\n");
+  pthread_create( &thread1, NULL, dummy_gustav, (void *) 100);
+  pthread_create( &thread2, NULL, dummy_gustav, (void *) 200);
+  pthread_join(thread1, NULL);
+  pthread_join(thread2, NULL);
   
-  printf("==Add 100\n");
-  fill100();
   print_queue();
-  printf("==Remove 100\n");
+  printf("==Remove\n");
   int *inten;
   int i = 0;
-  for(i = 0; i < 100; i++) {
+  for(i = 0; i < 200; i++) {
 	dequeue(inten);
   }
   print_queue();
@@ -42,9 +48,13 @@ int main(int argc, char *argv[] ) {
 }
 
 /* Put numbers 1-100 in queue*/
-void fill100() {
+void fill100(int x) {
   int i = 1;
   for (i = 1; i <= 100; i++){
-	enqueue(i);
+	enqueue(x++);
   }
+}
+void *dummy_gustav(void *arg) {
+    fill100( (int *) arg);
+
 }

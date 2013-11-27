@@ -4,12 +4,12 @@ SRCS=	tester.c concurrent_queue.c
 OBJS=	tester.o concurrent_queue.o
 
 CC=	gcc
-CFLAGS= -g 
+CFLAGS= -g -pthread
 
 .SUFFIXES: .c .o
 
 .c.o:
-	$(CC) $(CFLAGS) $(CPPFLAGS) -c $<
+	$(CC) $(CFLAGS) $(CPPFLAGS) -pthread -c $< 
 
 all:	$(BIN)
 

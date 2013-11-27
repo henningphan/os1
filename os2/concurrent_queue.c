@@ -1,4 +1,5 @@
 /*
+* Author: Gustav Ehrenborg, Henning Phan
 * concurrent_queue.c
 * One lock. 
 * Note that the linked list queue is hardcoded and global
@@ -6,6 +7,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <pthread.h>
 
 struct linked_list* new_linked_list(void);
 
@@ -21,6 +23,7 @@ struct node {
 struct linked_list {
   struct node* head;
   struct node* tail;
+  pthread_mutex_t lock;
 };
 
 void initialize_queue(void){
@@ -34,21 +37,27 @@ void enqueue(int val) {
   struct node* node = (struct node*)malloc(sizeof(struct node));
   node->value = val;
   node->next = NULL;
+  pthread_mutex_lock( &queue->lock );
   queue->tail->next = node;
   queue->tail = node;
+  pthread_mutex_unlock( &queue->lock );
 }
 
 /* Pops the head of the queue */
 int dequeue(int *extractedValue) {
   struct node* temp = NULL;
+  pthread_mutex_lock( &queue->lock );
   if (queue->head->next != NULL){
 	temp = queue->head->next;
+	free(queue->head);
 	queue->head = temp->next;
 	extractedValue = &temp->value;
-	free(temp);
+    pthread_mutex_unlock( &queue->lock );
   } else {
+    pthread_mutex_unlock( &queue->lock );
     return 1;
   }
+  pthread_mutex_unlock( &queue->lock );
   return 0;
 }
 
@@ -59,6 +68,9 @@ int dequeue(int *extractedValue) {
 struct linked_list* new_linked_list(){
   struct linked_list* list = (struct linked_list*)malloc(sizeof(struct linked_list));
   struct node* node = (struct node*)malloc(sizeof(struct node));
+
+  /* Init lock */
+  pthread_mutex_init( &list->lock, NULL );
 
   /* Initialize dummy node */
   node->value = 0;
