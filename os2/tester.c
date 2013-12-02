@@ -11,17 +11,12 @@
 #include "conc.h"
 #include <pthread.h>
 
-void fill100(int, int);
 void *dummy_Gustav(void*);
 int getIntSeed(void);
 
 int main(int argc, char *argv[] ) {
   struct timeval t1, t2;
   /* A magic struct that solves world hunger */
-  struct Package{
-      int work;
-      int seed;
-  };
   if( argc != 2){
     printf("Error: tester [Nr of threads]\n");
     exit(1);
@@ -47,10 +42,7 @@ int main(int argc, char *argv[] ) {
   printf("work: %d\n", work);
   int i = 0;
   for(i = 0; i < x; i++){
-    struct Package *package = malloc(sizeof(struct Package));
-    package->work = work;
-    package->seed = rand();
-    pthread_create( &thread_id[i], NULL, dummy_Gustav, (void *) &package);
+    pthread_create( &thread_id[i], NULL, dummy_Gustav, (void *) work);
   }
   printf("Waiting for threads\n");
   
@@ -65,19 +57,35 @@ int main(int argc, char *argv[] ) {
   exit(0);
 }
 
-/* Put numbers 1-100 in queue*/
-void fill100(int x, int iterations) {
-  int i = 1;
-  for (i = 1; i <= iterations; i++){
-	enqueue(x++);
-  }
-}
 void *dummy_Gustav(void *arg) {
-    struct Package *pack = arg;
-    printf("Thread seed: %d\n", pack->seed);
-//    fill100(1, (int *) arg);
+     int iterations = (int *) arg;
+     int *value;
+     int i = 0;
+     print_queue();
 
+     for (i = 0; i<1000; i++){
+        int randy = rand();
+        printf("randy: %d\n", randy%2);
+        switch( randy%2 ) {
+            case 0:
+            printf("enqueue\n");
+            enqueue(i);
+            break;
+            case 1:
+            if ( dequeue(value) == 0 ){
+                printf("dequeue: %d\n", *value);
+            }else{
+                printf("empty\n");
+            }
+            break;
+            default:
+            break;
+        }
+        print_queue();
+     }
 }
+
+
 int getIntSeed(void){
     struct timeval t;
     gettimeofday(&t, NULL);
