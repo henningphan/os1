@@ -51,12 +51,11 @@ int dequeue(int *extractedValue) {
 	free(queue->head);
 	queue->head = temp;
 	*extractedValue = temp->value;
-  } else {
+    pthread_mutex_unlock( &queue->lock );
+    return 0;
+  } 
     pthread_mutex_unlock( &queue->lock );
     return 1;
-  }
-  pthread_mutex_unlock( &queue->lock );
-  return 0;
 }
 
 
@@ -82,6 +81,7 @@ struct linked_list* new_linked_list(){
 
 /* Print list */
 void print_queue(){
+  return; 
   printf("{ ");
   struct node* node = queue->head->next;
 
