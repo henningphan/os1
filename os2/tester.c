@@ -41,6 +41,9 @@ int main(int argc, char *argv[] ) {
   int work = 100000/x;
   printf("work: %d\n", work);
   int i = 0;
+  for(i=0; i<100;i++){
+    enqueue(i);
+  }
   for(i = 0; i < x; i++){
     pthread_create( &thread_id[i], NULL, dummy_Gustav, (void *) work);
   }
@@ -59,14 +62,15 @@ int main(int argc, char *argv[] ) {
 
 void *dummy_Gustav(void *arg) {
      int iterations = (int *) arg;
-     int *value;
+     int a=5;
+     int *value=&a;
      int i = 0;
      print_queue();
 
-     for (i = 0; i<1000; i++){
+     for (i = 0; i<50; i++){
         int randy = rand();
-        printf("randy: %d\n", randy%2);
-        switch( randy%2 ) {
+        //printf("randy: %d\n", randy%2);
+        switch( 1%2 ) {
             case 0:
             printf("enqueue\n");
             enqueue(i);

@@ -50,13 +50,12 @@ int dequeue(int *extractedValue) {
 	temp = queue->head->next;
 	free(queue->head);
 	queue->head = temp;
-	*extractedValue = temp->value;
-  } else {
+	*extractedValue = (temp->value);
     pthread_mutex_unlock( &queue->lock );
-    return 1;
+    return 0;
   }
   pthread_mutex_unlock( &queue->lock );
-  return 0;
+  return 1;
 }
 
 
