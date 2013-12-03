@@ -59,29 +59,23 @@ int main(int argc, char *argv[] ) {
 
 void *dummy_Gustav(void *arg) {
      int iterations = (int *) arg;
-     int *value;
+     int a=5;
+     int *value=&a;
      int i = 0;
-     print_queue();
 
-     for (i = 0; i<1000; i++){
+     for (i = 0; i<iterations; i++){
         int randy = rand();
-        printf("randy: %d\n", randy%2);
+        //printf("randy: %d\n", randy%2);
         switch( randy%2 ) {
             case 0:
-            printf("enqueue\n");
             enqueue(i);
             break;
             case 1:
-            if ( dequeue(value) == 0 ){
-                printf("dequeue: %d\n", *value);
-            }else{
-                printf("empty\n");
-            }
+            dequeue(value);
             break;
             default:
             break;
         }
-        print_queue();
      }
 }
 

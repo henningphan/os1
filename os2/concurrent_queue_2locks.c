@@ -23,38 +23,40 @@ struct node {
 struct linked_list {
   struct node* head;
   struct node* tail;
-  pthread_mutex_t lock;
+  pthread_mutex_t enlock;
+  pthread_mutex_t delock;
 };
 
 void initialize_queue(void){
   queue = new_linked_list();
+  //Set dummy node
 }
 
 /* Creates a new node with the given value and appends it to the tail of the queue */
 void enqueue(int val) {
-  pthread_mutex_lock( &queue->lock );
+  pthread_mutex_lock( &queue->enlock );
   //New node
   struct node* node = (struct node*)malloc(sizeof(struct node));
   node->value = val;
   node->next = NULL;
   queue->tail->next = node;
   queue->tail = node;
-  pthread_mutex_unlock( &queue->lock );
+  pthread_mutex_unlock( &queue->enlock );
 }
 
 /* Pops the head of the queue */
 int dequeue(int *extractedValue) {
-  pthread_mutex_lock( &queue->lock );
+  pthread_mutex_lock( &queue->delock );
   struct node* temp = NULL;
   if (queue->head->next != NULL){
 	temp = queue->head->next;
 	free(queue->head);
 	queue->head = temp;
 	*extractedValue = (temp->value);
-    pthread_mutex_unlock( &queue->lock );
+    pthread_mutex_unlock( &queue->delock );
     return 0;
   }
-  pthread_mutex_unlock( &queue->lock );
+  pthread_mutex_unlock( &queue->delock );
   return 1;
 }
 
@@ -67,7 +69,8 @@ struct linked_list* new_linked_list(){
   struct node* node = (struct node*)malloc(sizeof(struct node));
 
   /* Init lock */
-  pthread_mutex_init( &list->lock, NULL );
+  pthread_mutex_init( &list->enlock, NULL );
+  pthread_mutex_init( &list->delock, NULL );
 
   /* Initialize dummy node */
   node->value = 0;
@@ -81,7 +84,6 @@ struct linked_list* new_linked_list(){
 
 /* Print list */
 void print_queue(){
-  return; 
   printf("{ ");
   struct node* node = queue->head->next;
 
